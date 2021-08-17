@@ -7,6 +7,10 @@ import responder
 
 wd = Path(__file__).parent
 api = responder.API(templates_dir=wd/'templates')
+myamya_jpg = Path('static/img/myamya.jpg')
+
+def file_timestamp(p):
+    return datetime.datetime.fromtimestamp(p.stat().st_mtime, tz=datetime.timezone.utc)
 
 # ヘッダに何も指定しない
 #
@@ -20,6 +24,58 @@ api = responder.API(templates_dir=wd/'templates')
 async def normal(req, resp):
     now = datetime.datetime.now()
     resp.html = api.template('cache_nospec.html', time=now.strftime('%Y/%m/%d %H:%M:%S'))
+
+#
+# /cache_nospec/ と同様
+# ただし、javascript / css / 画像へのリンクを含んでいる
+#
+@api.route("/cache_nospec2/")
+async def cache_nospec2(req, resp):
+    now = datetime.datetime.now()
+    resp.html = api.template('cache_nospec2.html', time=now.strftime('%Y/%m/%d %H:%M:%S'))
+
+@api.route("/script_test")
+async def script_test(req, resp):
+    resp.headers['Content-Type'] = 'text/javascript'
+    resp.text = "console.log('javascript')"
+
+@api.route("/script_test_maxage")
+async def script_test_maxage(req, resp):
+    resp.headers['Content-Type'] = 'text/javascript'
+    resp.headers['Cache-Control'] = 'max-age=60'
+    resp.text = "console.log('javascript')"
+
+@api.route("/script_test2")
+async def script_test2(req, resp):
+    resp.headers['Content-Type'] = 'text/plain'
+    resp.text = "console.log('plain')"
+
+@api.route("/css_test")
+async def css_test(req, resp):
+    resp.headers['Content-Type'] = 'text/css'
+    resp.text = '// test css'
+
+@api.route("/css_test_maxage")
+async def css_test_maxage(req, resp):
+    resp.headers['Content-Type'] = 'text/css'
+    resp.headers['Cache-Control'] = 'max-age=60'
+    resp.text = '// test css'
+
+@api.route("/css_test2")
+async def css_test2(req, resp):
+    resp.headers['Content-Type'] = 'text/plain'
+    resp.text = '// test css'
+
+@api.route("/myamya")
+async def myamya(req, resp):
+    resp.headers['Content-Type'] = 'image/jpeg'
+    resp.content = open(myamya_jpg, 'rb').read()
+
+@api.route("/myamya_maxage")
+async def myamya_maxage(req, resp):
+    resp.headers['Content-Type'] = 'image/jpeg'
+    resp.headers['Cache-Control'] = 'max-age=60'
+    resp.content = open(myamya_jpg, 'rb').read()
 
 # Cache-Control ヘッダ: max-age=60
 #
